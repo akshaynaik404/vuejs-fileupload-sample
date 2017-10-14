@@ -27,15 +27,30 @@ export default {
      }
    },
    created() {
-     var vm = this
-     firebase.auth().onAuthStateChanged(function(user) {
-       if (user) {
-         vm.user = user;
-         vm.name = vm.user.displayName;
-         vm.email = vm.user.email;
-         vm.photo = vm.user.photoURL;
-         vm.userId = vm.user.uid;
-      }
+    var vm = this
+    firebase.auth().onAuthStateChanged(function(user) {
+    if (user) {
+      vm.user = user;
+      vm.name = vm.user.displayName;
+      vm.email = vm.user.email;
+      vm.photo = vm.user.photoURL;
+      vm.userId = vm.user.uid;
+
+      // ref where data for user.uid will be stored
+      let usersRef = firebase.database().ref('/users/' + user.uid);
+
+      // check once whether user data exist
+      usersRef.once('value').then(function (snapshot) {
+        if(!snapshot.val()) {
+          // if data doesn't exist then its a new user add user data to db
+          usersRef.set({
+            'displayName': user.displayName,
+            'email': user.email,
+            'photo': user.photoURL
+          })
+        }
+      });
+    }
     });
   },
   methods: {
@@ -45,7 +60,8 @@ export default {
       //get file
       let getFile = e.target.files[0];
       //set storage ref
-      let storageRef = firebase.storage().ref('/user/'+ this.userId + '/' + getFile.name);
+      let userId = this.userId;
+      let storageRef = firebase.storage().ref('/user/'+ userId + '/' + getFile.name);
       //upload file
       let task = storageRef.put(getFile);
       task.on('state_changed',
@@ -54,16 +70,26 @@ export default {
         uploader.value = percentage;
       },
       function error(err){
-        console.log(err);
+        console.error(err);
       },
       function complete(){
-        console.log('complete upload');
+        let aadharNumber =  123456789;
         storageRef.getDownloadURL().then(function (url) {
+          firebase.database().ref('/users/' + userId + '/jobseekers/' + aadharNumber).set({
+            photo: {
+              url: url
+            }
+          }).then(function (a) {
+            let photo = document.createElement('img');
+            photo.setAttribute('src', url);
+            document.body.prepend(photo)
+          }).catch(function (err) {
+            console.log(err);
+          })
           let a = document.createElement('a');
           a.setAttribute('href', url);
+          a.innerHTML = 'Download Link'
           a.setAttribute('download', 'download')
-          a.innerHTML = url;
-          console.log(url, a);
           document.body.prepend(a)
         }).catch(function (err) {
           console.log(err);
