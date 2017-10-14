@@ -1,6 +1,8 @@
 <template>
   <div>
     <h1>Signup succeeded</h1>
+    <progress value="0" max="100" id="uploader"></progress>
+    <input accept="image/*" type="file" value="upload" capture="environment" @change="fileBtn($event)">
     <button @click='logOut'>Log out</button>
     <hr>
     <img :src="photo" style='height: 120px'> <br>
@@ -9,8 +11,6 @@
     <p>{{userId}}</p>
     <hr>
     <pre>{{user}}</pre>
-    <progress value="0" max="100" id="uploader"></progress>
-    <input accept="image/*" type="file" value="upload" capture="environment" @change="fileBtn($event)">
   </div>
 </template>
 
@@ -64,7 +64,7 @@ export default {
           a.setAttribute('download', 'download')
           a.innerHTML = url;
           console.log(url, a);
-          document.body.appendChild(a)
+          document.body.prepend(a)
         }).catch(function (err) {
           console.log(err);
         })
